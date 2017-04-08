@@ -1,0 +1,33 @@
+{
+	"connections": [{
+		"port": 8010,
+		"routes": {
+			"log": true
+		}
+	}],
+	"registrations": [{
+		"plugin": {
+			"register": "good",
+			"options": {
+				"ops": {
+					"interval": 10000
+				},
+				"reporters": {
+					"consoleReporter": [{
+						"module": "good-squeeze",
+						"name": "consoleSqueeze",
+						"args": [{
+							"error": "*",
+							"log": "*",
+							"ops": "*",
+							"response": "*",
+							"wreck": "*"
+						}]
+					}, {
+						"module": "good-console"
+					}, "stdout"]
+				}
+			}
+		}
+	}]
+}
