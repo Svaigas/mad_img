@@ -10,12 +10,12 @@
 			"register": "good",
 			"options": {
 				"ops": {
-					"interval": 10000
+					"interval": 60000
 				},
 				"reporters": {
 					"consoleReporter": [{
 						"module": "good-squeeze",
-						"name": "consoleSqueeze",
+						"name": "Squeeze",
 						"args": [{
 							"error": "*",
 							"log": "*",
@@ -27,6 +27,18 @@
 						"module": "good-console"
 					}, "stdout"]
 				}
+			}
+		}
+	}, {
+		"plugin": {
+			"register": ".",
+			"options": {
+				"name": "mad_img"
+			}
+		},
+		"options": {
+			"routes": {
+				"prefix": "/image/v1"
 			}
 		}
 	}]
