@@ -6,6 +6,10 @@
 		}
 	}],
 	"registrations": [{
+		"plugin": "inert"
+	}, {
+		"plugin": "vision"
+	}, {
 		"plugin": {
 			"register": "good",
 			"options": {
@@ -39,6 +43,16 @@
 		"options": {
 			"routes": {
 				"prefix": "/image/v1"
+			}
+		}
+	}, {
+		"plugin": {
+			"register": "hapi-swagger",
+			"options": {
+				"documentationPath": "/image/documentation",
+				"jsonPath": "/image/swagger.json",
+				"swaggerUIPath": "/image-swaggerui/",
+				"host": "localhost:8010"
 			}
 		}
 	}]
