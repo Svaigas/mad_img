@@ -25,6 +25,7 @@
   "homepage": "https://github.com/Svaigas/mad_img#readme",
   "dependencies": {
     "async": "^2.3.0",
+    "aws-sdk": "^2.40.0",
     "bluebird": "^3.5.0",
     "glob": "^7.1.1",
     "good": "^7.1.0",
@@ -35,9 +36,12 @@
     "hapi-swagger": "^7.7.0",
     "hoek": "^4.1.1",
     "inert": "^4.2.0",
+    "jpeg-js": "^0.2.0",
     "lodash": "^4.17.4",
     "path": "^0.12.7",
     "rejoice": "^4.0.0",
+    "sharp": "^0.17.3",
+    "shortid": "^2.2.8",
     "vision": "^4.1.1"
   }
 }
