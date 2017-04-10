@@ -1,0 +1,42 @@
+{
+	"connections": [{
+		"port": 8010
+	}],
+	"registrations": [{
+		"plugin": {
+			"register": "good",
+			"options": {
+				"ops": {
+					"interval": 60000
+				},
+				"reporters": {
+					"consoleReporter": [{
+						"module": "good-squeeze",
+						"name": "Squeeze",
+						"args": [{
+							"error": "*",
+							"log": "*",
+							"ops": "*",
+							"response": "*",
+							"wreck": "*"
+						}]
+					}, {
+						"module": "good-console"
+					}, "stdout"]
+				}
+			}
+		}
+	}, {
+		"plugin": {
+			"register": "./index.js",
+			"options": {
+				"name": "mad_img"
+			}
+		},
+		"options": {
+			"routes": {
+				"prefix": "/image/v1"
+			}
+		}
+	}]
+}
