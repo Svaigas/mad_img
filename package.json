@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "node_modules/.bin/rejoice -c manifest.json -p .",
-    "test": "lab -v -m 1000 -r html -o testResults.html"
+    "test": "lab -v -m 10000 -r html -o testResults.html"
   },
   "repository": {
     "type": "git",
@@ -24,11 +24,13 @@
   },
   "homepage": "https://github.com/Svaigas/mad_img#readme",
   "dependencies": {
+    "FormData": "^0.10.1",
     "async": "^2.3.0",
     "aws-sdk": "^2.40.0",
     "bluebird": "^3.5.0",
     "boom": "^4.3.1",
     "code": "^4.0.0",
+    "form-data": "^2.1.4",
     "glob": "^7.1.1",
     "glue": "^4.1.0",
     "good": "^7.1.0",
@@ -46,8 +48,10 @@
     "mongoose": "^4.9.4",
     "path": "^0.12.7",
     "rejoice": "^4.0.0",
+    "request": "^2.81.0",
     "sharp": "^0.17.3",
     "shortid": "^2.2.8",
+    "stream-to-promise": "^2.2.0",
     "vision": "^4.1.1"
   }
 }
