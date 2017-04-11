@@ -14,7 +14,8 @@ AWS_SECRET_ACCESS_TOKEN
 ,
 ```
 MAD_IMG_BUCKET
-```,
+```
+,
 ```
 MAD_IMG_MONGO
 ```
