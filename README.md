@@ -2,7 +2,7 @@
 API to upload images to AMAZON S3 and saving link, id and parameters on mongoDB
 
 ## Instalation guide  
-####Installing on localhost 
+###Installing on localhost 
 1. Have to set three environment variables :
 ```
 AWS_ACCESS_KEY_ID
@@ -22,12 +22,15 @@ MAD_IMG_MONGO
 
 
 mad.img.bucket is a bucket name, where images will be upload. mad.img.mongo is a mongodb address, where images will be upload, collection name should be created and name 'images': f.e. mongodb://localhost:27017/madimg.
+
 2. Wget project from github: ```https://github.com/Svaigas/mad_img.git```
+
 3. Go to directory, where you download zip, unpack and do : ```npm install```
+
 4. Run by using command :```npm run```
 
 
-####Installing using Dockerfile
+###Installing using Dockerfile
 -- TBD
 
 ## How to call API
