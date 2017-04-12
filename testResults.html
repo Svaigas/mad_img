@@ -1,0 +1,2548 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Tests &amp; Coverage</title>
+    <script>
+      headings = [];
+    
+      onload = function () {
+          headings = document.querySelectorAll('h2');
+          reset();
+      };
+    
+      onscroll = function (e) {
+          var heading = find(window.scrollY);
+          if (!heading) {
+            var current = document.querySelector('#menu a.active');
+            if (current) {
+              current.className = '';
+            }
+            return;
+          }
+          var links = document.querySelectorAll('#menu a')
+                  , link;
+    
+          for (var i = 0, len = links.length; i < len; ++i) {
+              link = links[i];
+              link.className = link.getAttribute('href') == '#' + heading.id ? 'active' : '';
+          }
+      };
+    
+      function find (y) {
+          var i = headings.length
+                  , heading;
+    
+          while (i--) {
+              heading = headings[i];
+              if (y >= heading.offsetTop) {
+                  return heading;
+              }
+          }
+      }
+    
+      function toggle (className) {
+    
+          var elements = document.getElementsByClassName(className);
+    
+          for (var i = 0, il = elements.length; i < il; ++i) {
+              var element = elements[i];
+    
+              if (element.classList.contains('hide')) {
+                  element.classList.remove('hide');
+                  element.classList.add('show');
+              }
+              else {
+                  element.classList.remove('show');
+                  element.classList.add('hide');
+              }
+          };
+      }
+    
+      function reset () {
+    
+          var shownElements = document.getElementsByClassName('show');
+          var filterElements = document.querySelectorAll('input[type=checkbox]');
+    
+          for (var i = 0, il = filterElements.length; i < il; ++i) {
+              filterElements[i].checked = false;
+          }
+    
+          // Check any filters with visible elements
+          for (i = 0, il = shownElements.length; i < il; ++i) {
+              var shownElement = shownElements[i];
+              var classNames = shownElement.className.split(' ');
+              for (var ci = 0, cl = classNames.length; ci < cl; ++ci){
+                  var element = document.getElementById('show-' + classNames[ci]);
+                  if (element) {
+                      element.checked = true;
+                  }
+              }
+          }
+      };
+    
+      function filter (element) {
+    
+          toggle(element.value);
+          reset();
+      }
+    </script>
+    <style>
+        body {
+            font: 14px/1.6 Helvetica, Arial, sans-serif;
+            margin: 0;
+            color: #2c2c2c;
+        }
+    
+        #tests, #coverage, #linting {
+            padding: 60px;
+        }
+    
+        h1 a:hover {
+            text-decoration: none;
+        }
+    
+        a[href^="#"],
+        a[href^="#"]:visited {
+            color: inherit;
+            text-decoration: none;
+        }
+    
+        h2 {
+            width: 80%;
+            margin-top: 80px;
+            margin-bottom: 0;
+            font-weight: 100;
+            letter-spacing: 1px;
+        }
+    
+        ul {
+            margin-top: 20px;
+            padding: 0 15px;
+            width: 100%;
+        }
+    
+        ul li {
+            float: left;
+            width: 40%;
+            margin-top: 5px;
+            margin-right: 60px;
+            list-style: none;
+            padding: 5px 0;
+            font-size: 12px;
+        }
+    
+        #menu {
+            position: fixed;
+            font-size: 12px;
+            overflow-y: auto;
+            top: 0;
+            right: 0;
+            margin: 0;
+            height: 100%;
+            padding: 15px 15px;
+            border-left: 1px solid #eee;
+            background-color: #666;
+            z-index: 1;
+        }
+    
+        #menu::after {
+            display: block;
+            content: '';
+            padding-top: 80px;
+        }
+    
+        #menu li a {
+            display: block;
+            color: white;
+            padding: 0 5px 0 35px;
+            transition: background 300ms;
+            text-decoration: none;
+        }
+    
+        #menu li {
+            position: relative;
+            list-style: none;
+        }
+    
+        #menu a:hover,
+        #menu a.active {
+            text-decoration: none;
+            background: rgba(255, 255, 255, .4);
+        }
+    
+        #menu li:hover .cov {
+            opacity: 1;
+        }
+    
+        #menu li .dirname {
+            opacity: .60;
+            padding-right: 2px;
+        }
+    
+        #menu li .basename {
+            opacity: 1;
+        }
+    
+        #menu .cov, #menu .lint {
+            background: rgba(0, 0, 0, .3);
+            position: absolute;
+            top: 0;
+            font-size: 9px;
+            text-align: center;
+            opacity: .8;
+            width: 22px;
+            border-radius: 10px;
+            padding: 2px 3px;
+        }
+    
+        #files .stats:nth-child(2n):not(.hide) {
+            display: inline-block;
+            margin-top: 15px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    
+        .stats div {
+            float: left;
+            padding: 0 5px;
+        }
+    
+        .stats::after {
+            display: block;
+            content: '';
+            clear: both;
+        }
+    
+        .stats .sloc::after {
+            content: ' SLOC';
+            color: #b6b6b6;
+        }
+    
+        .stats .percentage::after {
+            content: ' coverage';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .hits::after {
+            content: ' Covered';
+            color: #b6b6b6;
+        }
+    
+        .stats .misses::after {
+            content: ' Not Covered)';
+            color: #b6b6b6;
+        }
+    
+        .stats .failures::after {
+            content: ' Failures';
+            color: #b6b6b6;
+        }
+    
+        .stats .skipped::after {
+            content: ' Skipped';
+            color: #b6b6b6;
+        }
+    
+        .stats .test-count::after {
+            content: ' Tests';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::before {
+            content: '(';
+            color: #b6b6b6;
+        }
+    
+        .stats .duration::after {
+            content: ' ms)';
+            color: #b6b6b6;
+        }
+    
+        .high {
+            color: #00d4b4;
+        }
+    
+        .medium {
+            color: #e87d0d;
+        }
+    
+        .low {
+            color: #d4081a;
+        }
+    
+        .terrible {
+            color: #d4081a;
+            font-weight: bold;
+        }
+    
+        #files table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #files thead {
+            display: none;
+        }
+    
+        table td.line,
+        table td.lint,
+        table td.hits,
+        table td.original-line {
+            width: 20px;
+            background: #eaeaea;
+            text-align: right;
+            font-size: 11px;
+            padding: 0 10px;
+            color: #949494;
+            white-space: nowrap;
+        }
+    
+        table td.hits {
+            width: 10px;
+            padding: 2px 5px;
+            color: rgba(0, 0, 0, .2);
+            background: #f0f0f0;
+        }
+    
+        table td.lint.empty {
+            width: 0;
+            padding: 0;
+        }
+    
+        table td.lint > span {
+            border-radius: 50%;
+            width: 8px;
+            height: 8px;
+            display: inline-block;
+            vertical-align: baseline;
+        }
+    
+        table td.lint .errors {
+            background-color: red;
+        }
+    
+        table td.lint .warnings {
+            background-color: orange;
+        }
+    
+        tr.miss td.line,
+        tr.miss td.hits {
+            background: #e6c3c7;
+        }
+    
+        tr.miss td {
+            background: #f8d5d8;
+        }
+    
+        td.source {
+            padding-left: 15px;
+            line-height: 15px;
+            white-space: pre;
+            font: 12px monaco, monospace;
+        }
+    
+        td.source div {
+            display: inline-block;
+        }
+    
+        td.source div.true {
+            background: #bae8bf;
+        }
+    
+        td.source div.false {
+            background: #e8e5ba;
+        }
+    
+        td.source div.never {
+            background: #f8d5d8;
+        }
+    
+        #tests table {
+            width: 80%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            border: 1px solid #cbcbcb;
+            color: #363636;
+            border-radius: 3px;
+        }
+    
+        #tests thead {
+            background: #F5F5F5;
+        }
+    
+        #tests tr {
+            border: 1px solid #ccc;
+        }
+    
+        #tests td {
+            padding-left: 8px;
+            vertical-align: top;
+        }
+    
+        #tests .success:nth-child(2n) {
+            background: #F5F5F5;
+        }
+    
+        #tests .failure {
+            background: #FF9E9E;
+        }
+    
+        #tests table .skipped {
+            background: #AA82FF;
+        }
+    
+        #tests .success {
+            color: #949494;
+        }
+    
+        #tests .failure .test-title {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    
+        #tests .stack {
+            margin-top: 4px;
+            padding-left: 15px;
+            margin-bottom: 12px;
+            font: 12px monaco, monospace;
+            white-space: pre;
+            line-height: 15px;
+        }
+    
+        .hide {
+            display: none;
+        }
+    
+        .show {
+            display: inherit;
+        }
+    
+        #tests table .show {
+            display: table-row;
+        }
+    
+        [data-tooltip] {
+            position: relative;
+        }
+    
+        [data-tooltip]:hover:before {
+            border: solid;
+            border-color: #333 transparent;
+            border-width: 6px 6px 0 6px;
+            bottom: 20px;
+            content: "";
+            left: 0;
+            position: absolute;
+            z-index: 99;
+        }
+    
+        [data-tooltip]:hover:after {
+            background: #333;
+            background: rgba(0, 0, 0, .8);
+            border-radius: 5px;
+            bottom: 26px;
+            color: #fff;
+            left: -10px;
+            padding: 5px 15px;
+            position: absolute;
+            z-index: 98;
+            content: attr(data-tooltip);
+            white-space: pre;
+            text-align: left;
+        }
+    
+        .line[data-tooltip]:hover:after {
+            content: "Line number";
+        }
+    
+        .hits[data-tooltip]:hover:after {
+            content: "Number of hits";
+        }
+    
+        .miss .source[data-tooltip]:hover:after {
+            content: "Missed line";
+        }
+    
+        .miss.true[data-tooltip]:hover:after {
+            content: "Condition always true";
+        }
+    
+        .miss.false[data-tooltip]:hover:after {
+            content: "Condition always false";
+        }
+    
+        .miss.never[data-tooltip]:hover:after {
+            content: "Statement never reached";
+        }
+    
+        .lint .errors[data-tooltip]:hover:after {
+            content: "Linting errors:\A" attr(data-tooltip);
+        }
+    
+        .lint .warnings[data-tooltip]:hover:after {
+            content: "Linting warnings:\A" attr(data-tooltip);
+        }
+    
+        .original-line[data-tooltip]:hover:after {
+            content: "Original line in file " attr(data-tooltip);
+        }
+    
+        #filters {
+            width: 75%;
+            margin-top: 25px;
+        }
+    
+        #filters label {
+            margin-right: 10px;
+        }
+    
+        .lint-stats .lint-errors::after {
+            content: ' linting errors';
+            color: #b6b6b6;
+        }
+    
+        .lint-stats .lint-warnings::after {
+            content: ' linting warnings';
+            color: #b6b6b6;
+        }
+    
+        .lint-entry {
+            color: #b6b6b6;
+            float: none;
+            padding: 0;
+        }
+    
+        .lint-entry .level-ERROR {
+            color: #d4081a;
+        }
+    
+        .lint-entry .level-WARNING {
+            color: #e87d0d;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="menu">
+        <li><a href="#tests">Test Report</a></li>
+        <li><a href="#coverage">Coverage Report</a></li>
+        <li class="">
+            <span class="cov high">85.71</span>
+            <a href="#index.js"><span class="basename">index.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">95.83</span>
+            <a href="#lib/search.js"><span class="dirname">lib/</span><span class="basename">search.js</span></a>
+        </li>
+        <li class="">
+            <span class="cov high">91.26</span>
+            <a href="#lib/upload.js"><span class="dirname">lib/</span><span class="basename">upload.js</span></a>
+        </li>
+        <li><a href="#linting">Linting Report</a></li>
+    </div>
+    <div id="tests">
+      <h1>Test Report</h1>
+      <div class="stats high">
+          <div class="failures">0</div>
+          <div class="skipped">0</div>
+          <div class="test-count">3</div>
+          <div class="duration">849</div>
+      </div>
+      <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="success" id="show-success">
+          <label for="show-success">Show Success</label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="failure" id="show-failure">
+          <label for="show-failure">Show Failure</label>
+          <br>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Search.js:_@testing_" id="show-Search.js:_@testing_">
+          <label for="show-Search.js:_@testing_">Search.js: @testing </label>
+          <input type="checkbox" checked="" onchange="filter(this)" value="Upload.js:_@testing" id="show-Upload.js:_@testing">
+          <label for="show-Upload.js:_@testing">Upload.js: @testing</label>
+      </div>
+      <table>
+          <thead>
+          <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Duration (ms)</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr class="show Search.js:_@testing_ success">
+              <td class="test-id">1</td>
+              <td class="test-title">Search.js: @testing  Should return object, when given correct example id
+                  
+              </td>
+              <td class="test-duration">40</td>
+          </tr>
+          <tr class="show Search.js:_@testing_ success">
+              <td class="test-id">2</td>
+              <td class="test-title">Search.js: @testing  Should return Bad Request, when given wrong example id
+                  
+              </td>
+              <td class="test-duration">8</td>
+          </tr>
+          <tr class="show Upload.js:_@testing success">
+              <td class="test-id">3</td>
+              <td class="test-title">Upload.js: @testing S123431242n
+                  
+              </td>
+              <td class="test-duration">94</td>
+          </tr>
+          </tbody>
+      </table>
+    
+    </div>    <div id="coverage">
+        <h1>Code Coverage Report</h1>
+        <div class="stats high">
+            <div class="percentage">90.50%</div>
+            <div class="sloc">221</div>
+            <div class="hits">200</div>
+            <div class="misses">21</div>
+        </div>
+        <div id="filters">
+          <input type="checkbox" checked="" onchange="filter(this)" value="generated" id="show-generated">
+          <label for="show-generated">Show generated files</label>
+        </div>
+        <div id="files">
+            <div class="file ">
+                <h2 id="index.js">index.js </h2>
+                <div class="stats high">
+                    <div class="percentage">85.71%</div>
+                    <div class="sloc">70</div>
+                    <div class="hits">60</div>
+                    <div class="misses">10</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="index.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const _ &#x3D; require(&#x27;lodash&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Promise &#x3D; require(&#x27;bluebird&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Finder &#x3D; require(&#x27;glob&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Path &#x3D; require(&#x27;path&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">const Hoek &#x3D; require(&#x27;hoek&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="index.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">/**</td>
+                          
+                        </tr>            <tr id="index.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * Loads handlers for an API server.</td>
+                          
+                        </tr>            <tr id="index.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @param {Object} server The hapi server Object</td>
+                          
+                        </tr>            <tr id="index.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @param {Object} pluginOptions Plugin options to send to module initializers</td>
+                          
+                        </tr>            <tr id="index.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @param {String} glob The specification of where to load files from</td>
+                          
+                        </tr>            <tr id="index.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @param {Object} globOptions Options to send to the Finder (&#x27;glob&#x27; package)</td>
+                          
+                        </tr>            <tr id="index.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @returns A promise that resolves to a concatenated array of routes provided</td>
+                          
+                        </tr>            <tr id="index.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * loaded modules.</td>
+                          
+                        </tr>            <tr id="index.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> */</td>
+                          
+                        </tr>            <tr id="index.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="index.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.loadHandlers &#x3D;</td>
+                          
+                        </tr>            <tr id="index.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  function loadHandlers(server, pluginOptions, glob, globOptions) {</td>
+                          
+                        </tr>            <tr id="index.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    Hoek.assert(server, &#x27;server is required&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">    Hoek.assert(glob, &#x27;glob (file location) is required&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__21" class="chunks">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>    var options &#x3D; </div><div class="miss true" data-tooltip>globOptions</div><div> || </div><div class="miss never" data-tooltip>{}</div></td>
+                          
+                        </tr>            <tr id="index.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">    var self &#x3D; this</td>
+                          
+                        </tr>            <tr id="index.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">    return new Promise((resolve, reject) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        return new Finder(glob, options, (error, filenames) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__25" class="chunks">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>          if (</div><div class="miss false" data-tooltip>error</div><div>) {</div></td>
+                          
+                        </tr>            <tr id="index.js__26" class="miss">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>            reject(error)</td>
+                          
+                        </tr>            <tr id="index.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          } else {</td>
+                          
+                        </tr>            <tr id="index.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">            resolve(initFiles(filenames))</td>
+                          
+                        </tr>            <tr id="index.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          }</td>
+                          
+                        </tr>            <tr id="index.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        })</td>
+                          
+                        </tr>            <tr id="index.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      })</td>
+                          
+                        </tr>            <tr id="index.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      /**</td>
+                          
+                        </tr>            <tr id="index.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">       * Given an array of filenames, loads each file by requiring it and calling</td>
+                          
+                        </tr>            <tr id="index.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">       * its initialize method, and then concatenates route specifications to exports.routes</td>
+                          
+                        </tr>            <tr id="index.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">       * @param {Array} filenames The filenames that satisfy the glob passed to loadHandlers</td>
+                          
+                        </tr>            <tr id="index.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">       * @returns {Object} A promise that resolves to the route list with loaded route definitions</td>
+                          
+                        </tr>            <tr id="index.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">       */</td>
+                          
+                        </tr>            <tr id="index.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    function initFiles(filenames) {</td>
+                          
+                        </tr>            <tr id="index.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">      var loadedRoutes &#x3D; []</td>
+                          
+                        </tr>            <tr id="index.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        // load the modules</td>
+                          
+                        </tr>            <tr id="index.js__41" class="chunks">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>      var dir &#x3D; </div><div class="miss true" data-tooltip>options.cwd</div><div> || </div><div class="miss never" data-tooltip>__dirname</div></td>
+                          
+                        </tr>            <tr id="index.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">      var loadedModules &#x3D; _.map(filenames, (filename) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          // only save one copy of modules, so we don&#x27;t register its routes twice</td>
+                          
+                        </tr>            <tr id="index.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          var moduleDef &#x3D; {</td>
+                          
+                        </tr>            <tr id="index.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            path: Path.join(dir, filename)</td>
+                          
+                        </tr>            <tr id="index.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          }</td>
+                          
+                        </tr>            <tr id="index.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">          moduleDef.module &#x3D; require(moduleDef.path)</td>
+                          
+                        </tr>            <tr id="index.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">          return moduleDef</td>
+                          
+                        </tr>            <tr id="index.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        })</td>
+                          
+                        </tr>            <tr id="index.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        // initialize each module that has an initialize method</td>
+                          
+                        </tr>            <tr id="index.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">      return Promise.map(loadedModules, (moduleDef) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__52" class="chunks">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>          if (</div><div class="miss false" data-tooltip>!filenames</div><div> || filenames.length &#x3D;&#x3D;&#x3D; 0) {</div></td>
+                          
+                        </tr>            <tr id="index.js__53" class="miss">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>            return Promise.reject(new Error(&#x27;no files found with specifier: &#x27; + glob))</td>
+                          
+                        </tr>            <tr id="index.js__54" class="hit">
+                          <td class="line" data-tooltip>54</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          }</td>
+                          
+                        </tr>            <tr id="index.js__55" class="chunks">
+                          <td class="line" data-tooltip>55</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>          if (</div><div class="miss false" data-tooltip>moduleDef.module.initialize</div><div>) {</div></td>
+                          
+                        </tr>            <tr id="index.js__56" class="miss">
+                          <td class="line" data-tooltip>56</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>            return moduleDef.module.initialize.call(self, server, pluginOptions)</td>
+                          
+                        </tr>            <tr id="index.js__57" class="hit">
+                          <td class="line" data-tooltip>57</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          }</td>
+                          
+                        </tr>            <tr id="index.js__58" class="hit">
+                          <td class="line" data-tooltip>58</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        })</td>
+                          
+                        </tr>            <tr id="index.js__59" class="hit">
+                          <td class="line" data-tooltip>59</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        // then combine routes from each module into exports.routes</td>
+                          
+                        </tr>            <tr id="index.js__60" class="hit">
+                          <td class="line" data-tooltip>60</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        .then(() &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__61" class="hit">
+                          <td class="line" data-tooltip>61</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          _.each(loadedModules, (moduleDef) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__62" class="chunks">
+                          <td class="line" data-tooltip>62</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>            if (</div><div class="miss true" data-tooltip>moduleDef.module.routes</div><div>) {</div></td>
+                          
+                        </tr>            <tr id="index.js__63" class="hit">
+                          <td class="line" data-tooltip>63</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>4</td>
+                          <td class="source">              loadedRoutes &#x3D; loadedRoutes.concat(moduleDef.module.routes)</td>
+                          
+                        </tr>            <tr id="index.js__64" class="hit">
+                          <td class="line" data-tooltip>64</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">            }</td>
+                          
+                        </tr>            <tr id="index.js__65" class="hit">
+                          <td class="line" data-tooltip>65</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          })</td>
+                          
+                        </tr>            <tr id="index.js__66" class="hit">
+                          <td class="line" data-tooltip>66</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        }).then(() &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__67" class="hit">
+                          <td class="line" data-tooltip>67</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">          return Promise.resolve(loadedRoutes)</td>
+                          
+                        </tr>            <tr id="index.js__68" class="hit">
+                          <td class="line" data-tooltip>68</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">        })</td>
+                          
+                        </tr>            <tr id="index.js__69" class="hit">
+                          <td class="line" data-tooltip>69</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    }</td>
+                          
+                        </tr>            <tr id="index.js__70" class="hit">
+                          <td class="line" data-tooltip>70</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  }</td>
+                          
+                        </tr>            <tr id="index.js__71" class="hit">
+                          <td class="line" data-tooltip>71</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="index.js__72" class="hit">
+                          <td class="line" data-tooltip>72</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.register &#x3D; function(server, options, next) {</td>
+                          
+                        </tr>            <tr id="index.js__73" class="hit">
+                          <td class="line" data-tooltip>73</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  // save options and the prefix for use by this instance of the plugin</td>
+                          
+                        </tr>            <tr id="index.js__74" class="hit">
+                          <td class="line" data-tooltip>74</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  var context &#x3D; {</td>
+                          
+                        </tr>            <tr id="index.js__75" class="hit">
+                          <td class="line" data-tooltip>75</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    options: options,</td>
+                          
+                        </tr>            <tr id="index.js__76" class="hit">
+                          <td class="line" data-tooltip>76</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    prefix: server.realm.modifiers.route.prefix</td>
+                          
+                        </tr>            <tr id="index.js__77" class="hit">
+                          <td class="line" data-tooltip>77</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  }</td>
+                          
+                        </tr>            <tr id="index.js__78" class="hit">
+                          <td class="line" data-tooltip>78</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">  server.bind(context)</td>
+                          
+                        </tr>            <tr id="index.js__79" class="hit">
+                          <td class="line" data-tooltip>79</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">  return exports.loadHandlers.call(this, server, options, &#x27;lib/*.js&#x27;, {</td>
+                          
+                        </tr>            <tr id="index.js__80" class="hit">
+                          <td class="line" data-tooltip>80</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      cwd: __dirname</td>
+                          
+                        </tr>            <tr id="index.js__81" class="hit">
+                          <td class="line" data-tooltip>81</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })</td>
+                          
+                        </tr>            <tr id="index.js__82" class="hit">
+                          <td class="line" data-tooltip>82</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    .then((routes) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__83" class="hit">
+                          <td class="line" data-tooltip>83</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">      server.route(routes)</td>
+                          
+                        </tr>            <tr id="index.js__84" class="hit">
+                          <td class="line" data-tooltip>84</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">      return next()</td>
+                          
+                        </tr>            <tr id="index.js__85" class="hit">
+                          <td class="line" data-tooltip>85</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })</td>
+                          
+                        </tr>            <tr id="index.js__86" class="hit">
+                          <td class="line" data-tooltip>86</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    .catch((error) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="index.js__87" class="chunks">
+                          <td class="line" data-tooltip>87</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>      </div><div class="miss never" data-tooltip>next(error)</div></td>
+                          
+                        </tr>            <tr id="index.js__88" class="hit">
+                          <td class="line" data-tooltip>88</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">    })</td>
+                          
+                        </tr>            <tr id="index.js__89" class="hit">
+                          <td class="line" data-tooltip>89</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>            <tr id="index.js__90" class="hit">
+                          <td class="line" data-tooltip>90</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="index.js__91" class="hit">
+                          <td class="line" data-tooltip>91</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.register.attributes &#x3D; {</td>
+                          
+                        </tr>            <tr id="index.js__92" class="hit">
+                          <td class="line" data-tooltip>92</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  multiple: true,</td>
+                          
+                        </tr>            <tr id="index.js__93" class="hit">
+                          <td class="line" data-tooltip>93</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">  pkg: require(&#x27;./package.json&#x27;)</td>
+                          
+                        </tr>            <tr id="index.js__94" class="hit">
+                          <td class="line" data-tooltip>94</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/search.js">lib/search.js </h2>
+                <div class="stats high">
+                    <div class="percentage">95.83%</div>
+                    <div class="sloc">48</div>
+                    <div class="hits">46</div>
+                    <div class="misses">2</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/search.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">/**</td>
+                          
+                        </tr>            <tr id="lib/search.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @module search</td>
+                          
+                        </tr>            <tr id="lib/search.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @description Implementation of API to retrieve information about</td>
+                          
+                        </tr>            <tr id="lib/search.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * mongo DB object </td>
+                          
+                        </tr>            <tr id="lib/search.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> */</td>
+                          
+                        </tr>            <tr id="lib/search.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">&#x27;use strict&#x27;</td>
+                          
+                        </tr>            <tr id="lib/search.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Promise &#x3D; require(&#x27;bluebird&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/search.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Joi &#x3D; require(&#x27;joi&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/search.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var mongodb &#x3D; require(&#x27;mongodb&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/search.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Boom &#x3D; require(&#x27;boom&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/search.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/search.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.routes &#x3D; [{</td>
+                          
+                        </tr>            <tr id="lib/search.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	method: &#x27;GET&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/search.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	path: &#x27;/image/{imageID}&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/search.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	config: {</td>
+                          
+                        </tr>            <tr id="lib/search.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		handler: getImage,</td>
+                          
+                        </tr>            <tr id="lib/search.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		description: &#x27;helloworld handler&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/search.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		tags: [&#x27;api&#x27;],</td>
+                          
+                        </tr>            <tr id="lib/search.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		validate: {</td>
+                          
+                        </tr>            <tr id="lib/search.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			params: {</td>
+                          
+                        </tr>            <tr id="lib/search.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				imageID: Joi.string().min(24).max(24).required()</td>
+                          
+                        </tr>            <tr id="lib/search.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			}</td>
+                          
+                        </tr>            <tr id="lib/search.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/search.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/search.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}]</td>
+                          
+                        </tr>            <tr id="lib/search.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/search.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">/**</td>
+                          
+                        </tr>            <tr id="lib/search.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @description Handler for the search file on mongoDB</td>
+                          
+                        </tr>            <tr id="lib/search.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> */</td>
+                          
+                        </tr>            <tr id="lib/search.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">function getImage(request, reply) {</td>
+                          
+                        </tr>            <tr id="lib/search.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/search.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 1. get imageID from request params  </td>
+                          
+                        </tr>            <tr id="lib/search.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 2. connect to DB and search for object, by id</td>
+                          
+                        </tr>            <tr id="lib/search.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 3. return DB object</td>
+                          
+                        </tr>            <tr id="lib/search.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">	return getImageInfo(request.params.imageID)</td>
+                          
+                        </tr>            <tr id="lib/search.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.then(reply)</td>
+                          
+                        </tr>            <tr id="lib/search.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.catch((error) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/search.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			return reply(error)</td>
+                          
+                        </tr>            <tr id="lib/search.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		});</td>
+                          
+                        </tr>            <tr id="lib/search.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/search.js__41" class="hit">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	/*</td>
+                          
+                        </tr>            <tr id="lib/search.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @description get image object, by imageID</td>
+                          
+                        </tr>            <tr id="lib/search.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {String} imageID - 24 length string</td>
+                          
+                        </tr>            <tr id="lib/search.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @returns A promise that resolves to the resolve or reject</td>
+                          
+                        </tr>            <tr id="lib/search.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 */</td>
+                          
+                        </tr>            <tr id="lib/search.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	function getImageInfo(imageID) {</td>
+                          
+                        </tr>            <tr id="lib/search.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">		return new Promise(function(resolve, reject) {</td>
+                          
+                        </tr>            <tr id="lib/search.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			var MongoClient &#x3D; mongodb.MongoClient;</td>
+                          
+                        </tr>            <tr id="lib/search.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			var url &#x3D; process.env.MAD_IMG_MONGO;</td>
+                          
+                        </tr>            <tr id="lib/search.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/search.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			MongoClient.connect(url, function(err, db) {</td>
+                          
+                        </tr>            <tr id="lib/search.js__52" class="chunks">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>				if (</div><div class="miss false" data-tooltip>err</div><div>)</div></td>
+                          
+                        </tr>            <tr id="lib/search.js__53" class="miss">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>					reject(&#x27;Unable to connect DataBase&#x27;, err)</td>
+                          
+                        </tr>            <tr id="lib/search.js__54" class="hit">
+                          <td class="line" data-tooltip>54</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				else {</td>
+                          
+                        </tr>            <tr id="lib/search.js__55" class="hit">
+                          <td class="line" data-tooltip>55</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">					var collection &#x3D; db.collection(&#x27;images&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/search.js__56" class="hit">
+                          <td class="line" data-tooltip>56</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">					var ObjectId &#x3D; require(&#x27;mongodb&#x27;).ObjectID;</td>
+                          
+                        </tr>            <tr id="lib/search.js__57" class="hit">
+                          <td class="line" data-tooltip>57</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">					collection.findOne({</td>
+                          
+                        </tr>            <tr id="lib/search.js__58" class="hit">
+                          <td class="line" data-tooltip>58</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						&quot;_id&quot;: new ObjectId(imageID)</td>
+                          
+                        </tr>            <tr id="lib/search.js__59" class="hit">
+                          <td class="line" data-tooltip>59</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">					}, function(err, res) {</td>
+                          
+                        </tr>            <tr id="lib/search.js__60" class="hit">
+                          <td class="line" data-tooltip>60</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						if (!res)</td>
+                          
+                        </tr>            <tr id="lib/search.js__61" class="hit">
+                          <td class="line" data-tooltip>61</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">							reject(Boom.badRequest(&#x27;Unable to get object from DataBase, id : &#x27; + imageID));</td>
+                          
+                        </tr>            <tr id="lib/search.js__62" class="hit">
+                          <td class="line" data-tooltip>62</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						else</td>
+                          
+                        </tr>            <tr id="lib/search.js__63" class="hit">
+                          <td class="line" data-tooltip>63</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">							resolve(res);</td>
+                          
+                        </tr>            <tr id="lib/search.js__64" class="hit">
+                          <td class="line" data-tooltip>64</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">					});</td>
+                          
+                        </tr>            <tr id="lib/search.js__65" class="hit">
+                          <td class="line" data-tooltip>65</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				}</td>
+                          
+                        </tr>            <tr id="lib/search.js__66" class="hit">
+                          <td class="line" data-tooltip>66</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			})</td>
+                          
+                        </tr>            <tr id="lib/search.js__67" class="hit">
+                          <td class="line" data-tooltip>67</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		})</td>
+                          
+                        </tr>            <tr id="lib/search.js__68" class="hit">
+                          <td class="line" data-tooltip>68</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/search.js__69" class="hit">
+                          <td class="line" data-tooltip>69</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+            <div class="file ">
+                <h2 id="lib/upload.js">lib/upload.js </h2>
+                <div class="stats high">
+                    <div class="percentage">91.26%</div>
+                    <div class="sloc">103</div>
+                    <div class="hits">94</div>
+                    <div class="misses">9</div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Lint</th>
+                            <th>Hits</th>
+                            <th>Source</th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr id="lib/upload.js__1" class="hit">
+                          <td class="line" data-tooltip>1</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">/**</td>
+                          
+                        </tr>            <tr id="lib/upload.js__2" class="hit">
+                          <td class="line" data-tooltip>2</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @module upload</td>
+                          
+                        </tr>            <tr id="lib/upload.js__3" class="hit">
+                          <td class="line" data-tooltip>3</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @description Implementation of upload API that provides a mechanism</td>
+                          
+                        </tr>            <tr id="lib/upload.js__4" class="hit">
+                          <td class="line" data-tooltip>4</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * to import and resize image object </td>
+                          
+                        </tr>            <tr id="lib/upload.js__5" class="hit">
+                          <td class="line" data-tooltip>5</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> */</td>
+                          
+                        </tr>            <tr id="lib/upload.js__6" class="hit">
+                          <td class="line" data-tooltip>6</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">&#x27;use strict&#x27;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__7" class="hit">
+                          <td class="line" data-tooltip>7</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Joi &#x3D; require(&#x27;joi&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__8" class="hit">
+                          <td class="line" data-tooltip>8</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Path &#x3D; require(&#x27;path&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__9" class="hit">
+                          <td class="line" data-tooltip>9</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Promise &#x3D; require(&#x27;bluebird&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__10" class="hit">
+                          <td class="line" data-tooltip>10</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var sharp &#x3D; require(&#x27;sharp&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__11" class="hit">
+                          <td class="line" data-tooltip>11</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var shortid &#x3D; require(&#x27;shortid&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__12" class="hit">
+                          <td class="line" data-tooltip>12</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var AWS &#x3D; require(&#x27;aws-sdk&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__13" class="hit">
+                          <td class="line" data-tooltip>13</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var Boom &#x3D; require(&#x27;boom&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__14" class="hit">
+                          <td class="line" data-tooltip>14</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">var mongodb &#x3D; require(&#x27;mongodb&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__15" class="hit">
+                          <td class="line" data-tooltip>15</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__16" class="hit">
+                          <td class="line" data-tooltip>16</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">exports.routes &#x3D; [{</td>
+                          
+                        </tr>            <tr id="lib/upload.js__17" class="hit">
+                          <td class="line" data-tooltip>17</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	method: &#x27;POST&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__18" class="hit">
+                          <td class="line" data-tooltip>18</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	path: &#x27;/uploadImages/metadata&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__19" class="hit">
+                          <td class="line" data-tooltip>19</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	config: {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__20" class="hit">
+                          <td class="line" data-tooltip>20</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		handler: metadataHandler,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__21" class="hit">
+                          <td class="line" data-tooltip>21</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		description: &#x27;Upload image handler&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__22" class="hit">
+                          <td class="line" data-tooltip>22</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		tags: [&#x27;api&#x27;],</td>
+                          
+                        </tr>            <tr id="lib/upload.js__23" class="hit">
+                          <td class="line" data-tooltip>23</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		payload: {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__24" class="hit">
+                          <td class="line" data-tooltip>24</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			maxBytes: 8388608,	//8MB</td>
+                          
+                        </tr>            <tr id="lib/upload.js__25" class="hit">
+                          <td class="line" data-tooltip>25</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			output: &#x27;data&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__26" class="hit">
+                          <td class="line" data-tooltip>26</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			parse: true</td>
+                          
+                        </tr>            <tr id="lib/upload.js__27" class="hit">
+                          <td class="line" data-tooltip>27</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		},</td>
+                          
+                        </tr>            <tr id="lib/upload.js__28" class="hit">
+                          <td class="line" data-tooltip>28</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		validate: {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__29" class="hit">
+                          <td class="line" data-tooltip>29</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			payload: Joi.object().keys({</td>
+                          
+                        </tr>            <tr id="lib/upload.js__30" class="hit">
+                          <td class="line" data-tooltip>30</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				filedata: Joi.binary().encoding(&#x27;base64&#x27;).required(),</td>
+                          
+                        </tr>            <tr id="lib/upload.js__31" class="hit">
+                          <td class="line" data-tooltip>31</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				sizeList: Joi.array().items(</td>
+                          
+                        </tr>            <tr id="lib/upload.js__32" class="hit">
+                          <td class="line" data-tooltip>32</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">					Joi.object().keys({</td>
+                          
+                        </tr>            <tr id="lib/upload.js__33" class="hit">
+                          <td class="line" data-tooltip>33</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						width: Joi.number().positive().required().description(&#x27;width&#x27;),</td>
+                          
+                        </tr>            <tr id="lib/upload.js__34" class="hit">
+                          <td class="line" data-tooltip>34</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						height: Joi.number().positive().required().description(&#x27;height&#x27;),</td>
+                          
+                        </tr>            <tr id="lib/upload.js__35" class="hit">
+                          <td class="line" data-tooltip>35</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">					})).required().description(&#x27;List of sizes&#x27;)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__36" class="hit">
+                          <td class="line" data-tooltip>36</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			})</td>
+                          
+                        </tr>            <tr id="lib/upload.js__37" class="hit">
+                          <td class="line" data-tooltip>37</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__38" class="hit">
+                          <td class="line" data-tooltip>38</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__39" class="hit">
+                          <td class="line" data-tooltip>39</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}]</td>
+                          
+                        </tr>            <tr id="lib/upload.js__40" class="hit">
+                          <td class="line" data-tooltip>40</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__41" class="hit">
+                          <td class="line" data-tooltip>41</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">/**</td>
+                          
+                        </tr>            <tr id="lib/upload.js__42" class="hit">
+                          <td class="line" data-tooltip>42</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> * @description Handler for the upload metadata file to amazon and mongoDB</td>
+                          
+                        </tr>            <tr id="lib/upload.js__43" class="hit">
+                          <td class="line" data-tooltip>43</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"> */</td>
+                          
+                        </tr>            <tr id="lib/upload.js__44" class="hit">
+                          <td class="line" data-tooltip>44</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">function metadataHandler(request, reply) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__45" class="hit">
+                          <td class="line" data-tooltip>45</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">	var id &#x3D; shortid.generate();</td>
+                          
+                        </tr>            <tr id="lib/upload.js__46" class="hit">
+                          <td class="line" data-tooltip>46</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__47" class="hit">
+                          <td class="line" data-tooltip>47</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 1. get buffer from request and resize it  </td>
+                          
+                        </tr>            <tr id="lib/upload.js__48" class="hit">
+                          <td class="line" data-tooltip>48</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 2. upload list of images to Amazon S3</td>
+                          
+                        </tr>            <tr id="lib/upload.js__49" class="hit">
+                          <td class="line" data-tooltip>49</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 3. upload to mongo DB</td>
+                          
+                        </tr>            <tr id="lib/upload.js__50" class="hit">
+                          <td class="line" data-tooltip>50</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	// 4. reply response to user</td>
+                          
+                        </tr>            <tr id="lib/upload.js__51" class="hit">
+                          <td class="line" data-tooltip>51</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">	return resizeImages(id, request.payload.filedata, request.payload.sizeList)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__52" class="hit">
+                          <td class="line" data-tooltip>52</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.then(uploadDB)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__53" class="hit">
+                          <td class="line" data-tooltip>53</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.then(reply)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__54" class="hit">
+                          <td class="line" data-tooltip>54</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		.catch((error) &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__55" class="chunks">
+                          <td class="line" data-tooltip>55</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>			</div><div class="miss never" data-tooltip>return reply(error)</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__56" class="hit">
+                          <td class="line" data-tooltip>56</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__57" class="hit">
+                          <td class="line" data-tooltip>57</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__58" class="hit">
+                          <td class="line" data-tooltip>58</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	/*</td>
+                          
+                        </tr>            <tr id="lib/upload.js__59" class="hit">
+                          <td class="line" data-tooltip>59</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @description Resize Image and runs UploadAWS function</td>
+                          
+                        </tr>            <tr id="lib/upload.js__60" class="hit">
+                          <td class="line" data-tooltip>60</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Number} id - id generated by shortid plugin</td>
+                          
+                        </tr>            <tr id="lib/upload.js__61" class="hit">
+                          <td class="line" data-tooltip>61</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Object} imagedata - metadata from payload</td>
+                          
+                        </tr>            <tr id="lib/upload.js__62" class="hit">
+                          <td class="line" data-tooltip>62</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Object} imageSizeList - list of sizes, to resize image</td>
+                          
+                        </tr>            <tr id="lib/upload.js__63" class="hit">
+                          <td class="line" data-tooltip>63</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @returns A promise that resolves to the responseObject</td>
+                          
+                        </tr>            <tr id="lib/upload.js__64" class="hit">
+                          <td class="line" data-tooltip>64</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 */</td>
+                          
+                        </tr>            <tr id="lib/upload.js__65" class="hit">
+                          <td class="line" data-tooltip>65</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	function resizeImages(id, imagedata, imageSizeList) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__66" class="hit">
+                          <td class="line" data-tooltip>66</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">		return new Promise.map(imageSizeList, function(size) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__67" class="hit">
+                          <td class="line" data-tooltip>67</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			let width &#x3D; size.width;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__68" class="hit">
+                          <td class="line" data-tooltip>68</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			let height &#x3D; size.height;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__69" class="hit">
+                          <td class="line" data-tooltip>69</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__70" class="hit">
+                          <td class="line" data-tooltip>70</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			return sharp(imagedata)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__71" class="hit">
+                          <td class="line" data-tooltip>71</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				.resize(width, height)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__72" class="hit">
+                          <td class="line" data-tooltip>72</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				.toBuffer()</td>
+                          
+                        </tr>            <tr id="lib/upload.js__73" class="hit">
+                          <td class="line" data-tooltip>73</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				.then(uploadAWS.bind(null, id, width, height))</td>
+                          
+                        </tr>            <tr id="lib/upload.js__74" class="hit">
+                          <td class="line" data-tooltip>74</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				.catch(err &#x3D;&gt; {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__75" class="chunks">
+                          <td class="line" data-tooltip>75</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>					</div><div class="miss never" data-tooltip>reject(err);</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__76" class="hit">
+                          <td class="line" data-tooltip>76</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__77" class="hit">
+                          <td class="line" data-tooltip>77</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__78" class="hit">
+                          <td class="line" data-tooltip>78</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__79" class="hit">
+                          <td class="line" data-tooltip>79</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__80" class="hit">
+                          <td class="line" data-tooltip>80</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	/*</td>
+                          
+                        </tr>            <tr id="lib/upload.js__81" class="hit">
+                          <td class="line" data-tooltip>81</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @description UploadAWS function, which uploads to AWS S3</td>
+                          
+                        </tr>            <tr id="lib/upload.js__82" class="hit">
+                          <td class="line" data-tooltip>82</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Number} id - id generated by shortid plugin</td>
+                          
+                        </tr>            <tr id="lib/upload.js__83" class="hit">
+                          <td class="line" data-tooltip>83</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Number} width - width value of resizing</td>
+                          
+                        </tr>            <tr id="lib/upload.js__84" class="hit">
+                          <td class="line" data-tooltip>84</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Number} height - height value of resizing</td>
+                          
+                        </tr>            <tr id="lib/upload.js__85" class="hit">
+                          <td class="line" data-tooltip>85</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Object} buffer - buffer to resize</td>
+                          
+                        </tr>            <tr id="lib/upload.js__86" class="hit">
+                          <td class="line" data-tooltip>86</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @returns A promise that resolves to the responseObject</td>
+                          
+                        </tr>            <tr id="lib/upload.js__87" class="hit">
+                          <td class="line" data-tooltip>87</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 */</td>
+                          
+                        </tr>            <tr id="lib/upload.js__88" class="hit">
+                          <td class="line" data-tooltip>88</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	function uploadAWS(id, width, height, buffer) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__89" class="hit">
+                          <td class="line" data-tooltip>89</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">		return new Promise(function(resolve, reject) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__90" class="hit">
+                          <td class="line" data-tooltip>90</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			AWS.config.update({</td>
+                          
+                        </tr>            <tr id="lib/upload.js__91" class="hit">
+                          <td class="line" data-tooltip>91</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				accessKeyId: process.env.AWS_ACCESS_KEY_ID,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__92" class="hit">
+                          <td class="line" data-tooltip>92</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				secretAccessKey: process.env.AWS_SECRET_ACCESS_TOKEN,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__93" class="hit">
+                          <td class="line" data-tooltip>93</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				signatureVersion: &#x27;v4&#x27;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__94" class="hit">
+                          <td class="line" data-tooltip>94</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__95" class="hit">
+                          <td class="line" data-tooltip>95</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__96" class="hit">
+                          <td class="line" data-tooltip>96</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			let params &#x3D; {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__97" class="hit">
+                          <td class="line" data-tooltip>97</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				Bucket: process.env.MAD_IMG_BUCKET,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__98" class="hit">
+                          <td class="line" data-tooltip>98</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				Key: id + &#x27;_&#x27; + width + &#x27;_&#x27; + height + &#x27;.jpg&#x27;,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__99" class="hit">
+                          <td class="line" data-tooltip>99</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				Body: buffer</td>
+                          
+                        </tr>            <tr id="lib/upload.js__100" class="hit">
+                          <td class="line" data-tooltip>100</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			};</td>
+                          
+                        </tr>            <tr id="lib/upload.js__101" class="hit">
+                          <td class="line" data-tooltip>101</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__102" class="hit">
+                          <td class="line" data-tooltip>102</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			let s3 &#x3D; new AWS.S3();</td>
+                          
+                        </tr>            <tr id="lib/upload.js__103" class="hit">
+                          <td class="line" data-tooltip>103</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			s3.putObject(params, function(err, inf) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__104" class="chunks">
+                          <td class="line" data-tooltip>104</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>				</div><div class="miss never" data-tooltip>if (err) {</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__105" class="miss">
+                          <td class="line" data-tooltip>105</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>					reject(&quot;Error uploading data: &quot;, err);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__106" class="hit">
+                          <td class="line" data-tooltip>106</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				} else {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__107" class="hit">
+                          <td class="line" data-tooltip>107</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__108" class="chunks">
+                          <td class="line" data-tooltip>108</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div class="miss never" data-tooltip>				}</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__109" class="hit">
+                          <td class="line" data-tooltip>109</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__110" class="hit">
+                          <td class="line" data-tooltip>110</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			let url &#x3D; &#x27;https://&#x27; + params.Bucket + &#x27;.&#x27; + s3.endpoint.host + &#x27;/&#x27; + params.Key;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__111" class="hit">
+                          <td class="line" data-tooltip>111</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			var responseObject &#x3D; {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__112" class="hit">
+                          <td class="line" data-tooltip>112</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				&quot;url&quot;: url,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__113" class="hit">
+                          <td class="line" data-tooltip>113</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				&quot;width&quot;: width,</td>
+                          
+                        </tr>            <tr id="lib/upload.js__114" class="hit">
+                          <td class="line" data-tooltip>114</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				&quot;height&quot;: height</td>
+                          
+                        </tr>            <tr id="lib/upload.js__115" class="hit">
+                          <td class="line" data-tooltip>115</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			};</td>
+                          
+                        </tr>            <tr id="lib/upload.js__116" class="hit">
+                          <td class="line" data-tooltip>116</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">			resolve(responseObject);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__117" class="hit">
+                          <td class="line" data-tooltip>117</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		});</td>
+                          
+                        </tr>            <tr id="lib/upload.js__118" class="hit">
+                          <td class="line" data-tooltip>118</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__119" class="hit">
+                          <td class="line" data-tooltip>119</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__120" class="hit">
+                          <td class="line" data-tooltip>120</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	/*</td>
+                          
+                        </tr>            <tr id="lib/upload.js__121" class="hit">
+                          <td class="line" data-tooltip>121</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @description uploadDB function, which uploads to mongoDB</td>
+                          
+                        </tr>            <tr id="lib/upload.js__122" class="hit">
+                          <td class="line" data-tooltip>122</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @params {Object} respArray - Response Array from upload AWS function </td>
+                          
+                        </tr>            <tr id="lib/upload.js__123" class="hit">
+                          <td class="line" data-tooltip>123</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 * @returns A promise that resolves to the respArray Object</td>
+                          
+                        </tr>            <tr id="lib/upload.js__124" class="hit">
+                          <td class="line" data-tooltip>124</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	 */</td>
+                          
+                        </tr>            <tr id="lib/upload.js__125" class="hit">
+                          <td class="line" data-tooltip>125</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	function uploadDB(respArray) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__126" class="hit">
+                          <td class="line" data-tooltip>126</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">		return new Promise(function(resolve, reject) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__127" class="hit">
+                          <td class="line" data-tooltip>127</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			var MongoClient &#x3D; mongodb.MongoClient;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__128" class="hit">
+                          <td class="line" data-tooltip>128</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">			var url &#x3D; process.env.MAD_IMG_MONGO;</td>
+                          
+                        </tr>            <tr id="lib/upload.js__129" class="hit">
+                          <td class="line" data-tooltip>129</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__130" class="hit">
+                          <td class="line" data-tooltip>130</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">			MongoClient.connect(url, function(err, db) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__131" class="chunks">
+                          <td class="line" data-tooltip>131</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>				if (</div><div class="miss false" data-tooltip>err</div><div>)</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__132" class="miss">
+                          <td class="line" data-tooltip>132</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>					reject(&#x27;Unable to connect DataBase&#x27;, err)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__133" class="hit">
+                          <td class="line" data-tooltip>133</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				else {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__134" class="hit">
+                          <td class="line" data-tooltip>134</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">					var collection &#x3D; db.collection(&#x27;images&#x27;);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__135" class="hit">
+                          <td class="line" data-tooltip>135</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">					for (var obj in respArray) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__136" class="hit">
+                          <td class="line" data-tooltip>136</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>2</td>
+                          <td class="source">						collection.insert(respArray[obj], function(err, result) {</td>
+                          
+                        </tr>            <tr id="lib/upload.js__137" class="chunks">
+                          <td class="line" data-tooltip>137</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"><div>							if (</div><div class="miss false" data-tooltip>err</div><div>)</div></td>
+                          
+                        </tr>            <tr id="lib/upload.js__138" class="miss">
+                          <td class="line" data-tooltip>138</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source" data-tooltip>								reject(&#x27;Unable to upload information to DB&#x27;, err)</td>
+                          
+                        </tr>            <tr id="lib/upload.js__139" class="hit">
+                          <td class="line" data-tooltip>139</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">						})</td>
+                          
+                        </tr>            <tr id="lib/upload.js__140" class="hit">
+                          <td class="line" data-tooltip>140</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source"></td>
+                          
+                        </tr>            <tr id="lib/upload.js__141" class="hit">
+                          <td class="line" data-tooltip>141</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">					}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__142" class="hit">
+                          <td class="line" data-tooltip>142</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip>1</td>
+                          <td class="source">					resolve(respArray);</td>
+                          
+                        </tr>            <tr id="lib/upload.js__143" class="hit">
+                          <td class="line" data-tooltip>143</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">				}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__144" class="hit">
+                          <td class="line" data-tooltip>144</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">			})</td>
+                          
+                        </tr>            <tr id="lib/upload.js__145" class="hit">
+                          <td class="line" data-tooltip>145</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">		})</td>
+                          
+                        </tr>            <tr id="lib/upload.js__146" class="hit">
+                          <td class="line" data-tooltip>146</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">	}</td>
+                          
+                        </tr>            <tr id="lib/upload.js__147" class="hit">
+                          <td class="line" data-tooltip>147</td>
+                          <td class="lint empty"></td>
+                          <td class="hits" data-tooltip></td>
+                          <td class="source">}</td>
+                          
+                        </tr>        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>    <div id="linting">
+        <h1>Linting Report</h1>
+            <span>Nothing to show here, linting is disabled.</span>
+    </div>  </body>
+</html>

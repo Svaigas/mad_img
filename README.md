@@ -27,7 +27,7 @@ mad.img.bucket is a bucket name, where images will be upload. mad.img.mongo is a
 
 3. Go to directory, where you download zip, unpack and do : ```npm install```
 
-4. Run by using command :```npm run```
+4. Run by using command :```npm start```
 
 
 ###Installing using Dockerfile
